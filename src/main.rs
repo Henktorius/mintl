@@ -78,10 +78,10 @@ impl App {
                 KeyCode::Char('q') => self.exit(),
                 KeyCode::Char('n') => self.create_task(),
                 KeyCode::Char('d') => self.update_task_state(None),
-                KeyCode::Left => self.move_left(),
-                KeyCode::Right => self.move_right(),
-                KeyCode::Up => self.move_up(),
-                KeyCode::Down => self.move_down(),
+                KeyCode::Char('h') | KeyCode::Left => self.move_left(),
+                KeyCode::Char('l') | KeyCode::Right => self.move_right(),
+                KeyCode::Char('k') | KeyCode::Up => self.move_up(),
+                KeyCode::Char('j') | KeyCode::Down => self.move_down(),
                 KeyCode::Char('1') => self.update_task_state(Some(0)),
                 KeyCode::Char('2') => self.update_task_state(Some(1)),
                 KeyCode::Char('3') => self.update_task_state(Some(2)),
@@ -191,14 +191,19 @@ impl App {
 
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
+        let global_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Percentage(100), Constraint::Length(3)])
+            .split(area);
+
         let layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![
                 Constraint::Percentage(33),
-                Constraint::Percentage(33),
+                Constraint::Percentage(34),
                 Constraint::Percentage(33),
             ])
-            .split(area);
+            .split(global_layout[0]);
 
         let popup_area = Rect {
             x: 2 * area.width / 9,
@@ -208,49 +213,20 @@ impl Widget for &App {
         };
 
         let left_title = Title::from(" TODO ".bold());
-        let left_instructions = Title::from(Line::from(vec![
-            " Move to:".into(),
-            "  TODO <1>".blue().bold(),
-            "  DOING <2>".light_red().bold(),
-            "  DONE <3> ".green().bold(),
-        ]));
         let mut left_block = Block::default()
             .title(left_title.alignment(Alignment::Center))
-            .title(
-                left_instructions
-                    .alignment(Alignment::Center)
-                    .position(Position::Bottom),
-            )
             .borders(Borders::ALL)
             .border_set(border::ROUNDED);
 
         let center_title = Title::from(" Doing ".bold());
-        let center_instructions = Title::from(Line::from(vec![
-            " New entry ".into(),
-            "<n>".blue().bold(),
-            "  Delete entry ".into(),
-            "<d> ".blue().bold(),
-        ]));
         let mut center_block = Block::default()
             .title(center_title.alignment(Alignment::Center))
-            .title(
-                center_instructions
-                    .alignment(Alignment::Center)
-                    .position(Position::Bottom),
-            )
             .borders(Borders::ALL)
             .border_set(border::ROUNDED);
 
         let right_title = Title::from(" Done ".bold());
-        let right_instructions =
-            Title::from(Line::from(vec![" Quit".into(), " <q> ".red().bold()]));
         let mut right_block = Block::default()
             .title(right_title.alignment(Alignment::Center))
-            .title(
-                right_instructions
-                    .alignment(Alignment::Center)
-                    .position(Position::Bottom),
-            )
             .borders(Borders::ALL)
             .border_set(border::ROUNDED);
 
@@ -323,6 +299,28 @@ impl Widget for &App {
         .centered()
         .block(right_block)
         .render(layout[2], buf);
+
+        Paragraph::new(Line::from(vec![
+            " New entry".white(),
+            " <n>".light_blue().bold(),
+            "  Delete entry".white(),
+            " <d>".light_blue().bold(),
+            "  Move:".white(),
+            " <hjkl>".light_blue().bold(),
+            "  Change state:".white(),
+            " TODO <1>".light_blue().bold(),
+            " DOING <2>".light_red().bold(),
+            " DONE <3>".green().bold(),
+            "  Quit".white(),
+            " <q> ".red().bold(),
+        ]))
+        .centered()
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_set(border::ROUNDED),
+        )
+        .render(global_layout[1], buf);
 
         if self.state == AppState::CreateTask {
             Clear.render(popup_area, buf);
