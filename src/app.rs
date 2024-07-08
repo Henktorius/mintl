@@ -245,63 +245,28 @@ impl Widget for &App {
             _ => {}
         }
 
-        Paragraph::new(
-            self.tasks[0]
-                .iter()
-                .enumerate()
-                .map(|(index, task)| {
-                    if self.cursor_pos == (0, index) {
-                        Line::from(task.content.clone().into_iter().collect::<String>())
-                            .bold()
-                            .light_red()
-                    } else {
-                        Line::from(task.content.clone().into_iter().collect::<String>()).white()
-                    }
-                })
-                .collect::<Vec<_>>(),
-        )
-        .centered()
-        .block(left_block)
-        .render(layout[0], buf);
+        let blocks = vec![left_block, center_block, right_block];
 
-        Paragraph::new(
-            self.tasks[1]
-                .iter()
-                .enumerate()
-                .map(|(index, task)| {
-                    if self.cursor_pos == (1, index) {
-                        Line::from(task.content.clone().into_iter().collect::<String>())
-                            .bold()
-                            .light_red()
-                    } else {
-                        Line::from(task.content.clone().into_iter().collect::<String>()).white()
-                    }
-                })
-                .collect::<Vec<_>>(),
-        )
-        .centered()
-        .block(center_block)
-        .render(layout[1], buf);
-
-        Paragraph::new(
-            self.tasks[2]
-                .iter()
-                .enumerate()
-                .map(|(index, task)| {
-                    Line::styled(
-                        task.content.clone().into_iter().collect::<String>(),
-                        if self.cursor_pos == (2, index) {
-                            self.styles.s_list_element_hl
+        for (i, block) in blocks.iter().enumerate() {
+            Paragraph::new(
+                self.tasks[i]
+                    .iter()
+                    .enumerate()
+                    .map(|(index, task)| {
+                        if self.cursor_pos == (i, index) {
+                            Line::from(task.content.clone().into_iter().collect::<String>())
+                                .bold()
+                                .light_red()
                         } else {
-                            self.styles.s_list_element
-                        },
-                    )
-                })
-                .collect::<Vec<_>>(),
-        )
-        .centered()
-        .block(right_block)
-        .render(layout[2], buf);
+                            Line::from(task.content.clone().into_iter().collect::<String>()).white()
+                        }
+                    })
+                    .collect::<Vec<_>>(),
+            )
+            .centered()
+            .block(block.clone())
+            .render(layout[i], buf);
+        }
 
         Paragraph::new(Line::from(vec![
             Span::styled("New entry ", self.styles.s_instruction_tag),
