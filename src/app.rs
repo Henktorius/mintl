@@ -15,7 +15,7 @@ use crate::styles::Styles;
 use crate::tui;
 
 #[derive(Debug, Clone)]
-struct Task {
+pub struct Task {
     content: Vec<char>,
 }
 
@@ -253,13 +253,14 @@ impl Widget for &App {
                     .iter()
                     .enumerate()
                     .map(|(index, task)| {
-                        if self.cursor_pos == (i, index) {
-                            Line::from(task.content.clone().into_iter().collect::<String>())
-                                .bold()
-                                .light_red()
-                        } else {
-                            Line::from(task.content.clone().into_iter().collect::<String>()).white()
-                        }
+                        Line::styled(
+                            task.content.clone().into_iter().collect::<String>(),
+                            if self.cursor_pos == (i, index) {
+                                self.styles.s_list_element_hl
+                            } else {
+                                self.styles.s_list_element
+                            },
+                        )
                     })
                     .collect::<Vec<_>>(),
             )
