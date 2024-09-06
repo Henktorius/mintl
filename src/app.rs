@@ -1,4 +1,4 @@
-use std::io;
+use std::{env, fs::OpenOptions, io, io::Write};
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
@@ -16,11 +16,11 @@ use crate::tui;
 
 #[derive(Debug, Clone)]
 pub struct Task {
-    content: Vec<char>,
+    pub content: Vec<char>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
-enum AppState {
+pub enum AppState {
     Normal,
     CreateTask,
 }
@@ -33,12 +33,12 @@ impl Default for AppState {
 
 #[derive(Debug, Default)]
 pub struct App {
-    tasks: Vec<Vec<Task>>,
-    state: AppState,
-    exit: bool,
-    buffer: Vec<char>,
-    cursor_pos: (usize, usize),
-    styles: Styles,
+    pub tasks: Vec<Vec<Task>>,
+    pub state: AppState,
+    pub exit: bool,
+    pub buffer: Vec<char>,
+    pub cursor_pos: (usize, usize),
+    pub styles: Styles,
 }
 
 impl App {
@@ -58,7 +58,47 @@ impl App {
             terminal.draw(|frame| self.render_frame(frame))?;
             self.handle_events()?;
         }
+        let save_content = self.tasks_to_chars();
+        self.save_and_exit(save_content)
+    }
+
+    fn save_and_exit(&mut self, content: Vec<u8>) -> io::Result<()> {
+        match env::current_dir() {
+            Ok(env_path) => {
+                match OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .truncate(true)
+                    .append(false)
+                    .open(env_path.join(".mintl"))
+                {
+                    Ok(mut file) => {
+                        if let Err(e) = file.write(&content) {
+                            eprintln!("Failed to write to file: {}", e);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to open or create save file: {}", e);
+                    }
+                };
+            }
+            Err(e) => {
+                eprintln!("Failed to find working directory: {}", e)
+            }
+        }
         Ok(())
+    }
+
+    fn tasks_to_chars(&mut self) -> Vec<u8> {
+        let mut r: Vec<u8> = Vec::new();
+        for task in &self.tasks {
+            task.iter().for_each(|t| {
+                t.content.iter().for_each(|c| r.push(*c as u8));
+                r.extend_from_slice("\t".as_bytes());
+            });
+            r.extend_from_slice("\n".as_bytes());
+        }
+        r
     }
 
     fn render_frame(&self, frame: &mut Frame) {
