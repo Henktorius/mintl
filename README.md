@@ -5,9 +5,6 @@
 - No complicated interfaces or unnecesary options, just write tasks down and get them done.
 - No mouse needed! Everything in MinTL can be done with just 10 keys.
 ---
-### Screenshots
-(todo)
----
-### Controls
-(todo)
----
+### Known issues
+- When loading .mintl file two empty items get added to each list
+- Unable to delete or move last item from any list
