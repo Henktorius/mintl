@@ -96,8 +96,10 @@ impl App {
                 t.content.iter().for_each(|c| r.push(*c as u8));
                 r.extend_from_slice("\t".as_bytes());
             });
+            r.pop();
             r.extend_from_slice("\n".as_bytes());
         }
+        r.pop();
         r
     }
 
@@ -199,23 +201,26 @@ impl App {
     }
 
     fn update_task_state(&mut self, new_state: Option<usize>) {
-        if new_state.is_some() && self.cursor_pos.0 == new_state.unwrap() {
+        if self.tasks[self.cursor_pos.0].is_empty() || (new_state.is_some() && self.cursor_pos.0 == new_state.unwrap()) {
             return;
         }
-        match self.tasks[self.cursor_pos.0].len() {
-            0 => {
-                return;
-            }
-            1 => {
-                self.cursor_pos.1 = 0;
-            }
-            _ => {
-                if self.cursor_pos.1 == self.tasks[self.cursor_pos.0].len() - 1 {
-                    self.cursor_pos.1 -= 1;
-                }
-            }
-        }
         let r = self.tasks[self.cursor_pos.0].remove(self.cursor_pos.1);
+        //match self.tasks[self.cursor_pos.0].len() {
+        //    0 => {
+        //        return;
+        //    }
+        //    1 => {
+        //        self.cursor_pos.1 = 0;
+        //    }
+        //    _ => {
+        //        if self.cursor_pos.1 == self.tasks[self.cursor_pos.0].len() {
+        //            self.cursor_pos.1 -= 1;
+        //        }
+        //    }
+        //}
+        if self.cursor_pos.1 > 0 {
+            self.cursor_pos.1 -= 1;
+        }
         if let Some(new_state) = new_state {
             self.tasks[new_state].push(r);
         }
