@@ -53,3 +53,9 @@ impl Default for Styles {
         }
     }
 }
+
+impl Styles {
+    pub fn from_file() {
+        
+    }
+}

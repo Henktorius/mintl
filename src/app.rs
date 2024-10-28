@@ -1,5 +1,3 @@
-use std::{env, fs::OpenOptions, io, io::Write};
-
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
     layout::Alignment,
@@ -53,61 +51,20 @@ impl App {
         }
     }
 
-    pub fn run(&mut self, terminal: &mut tui::Tui) -> io::Result<()> {
+    pub fn run(&mut self, terminal: &mut tui::Tui) -> std::io::Result<()> {
         while !self.exit {
             terminal.draw(|frame| self.render_frame(frame))?;
             self.handle_events()?;
         }
-        let save_content = self.tasks_to_chars();
-        self.save_and_exit(save_content)
-    }
-
-    fn save_and_exit(&mut self, content: Vec<u8>) -> io::Result<()> {
-        match env::current_dir() {
-            Ok(env_path) => {
-                match OpenOptions::new()
-                    .write(true)
-                    .create(true)
-                    .truncate(true)
-                    .append(false)
-                    .open(env_path.join(".mintl"))
-                {
-                    Ok(mut file) => {
-                        if let Err(e) = file.write(&content) {
-                            eprintln!("Failed to write to file: {}", e);
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to open or create save file: {}", e);
-                    }
-                };
-            }
-            Err(e) => {
-                eprintln!("Failed to find working directory: {}", e)
-            }
-        }
-        Ok(())
-    }
-
-    fn tasks_to_chars(&mut self) -> Vec<u8> {
-        let mut r: Vec<u8> = Vec::new();
-        for task in &self.tasks {
-            task.iter().for_each(|t| {
-                t.content.iter().for_each(|c| r.push(*c as u8));
-                r.extend_from_slice("\t".as_bytes());
-            });
-            r.pop();
-            r.extend_from_slice("\n".as_bytes());
-        }
-        r.pop();
-        r
+        let save_content = crate::state::tasks_to_chars(&self.tasks);
+        crate::file::save_state(save_content)
     }
 
     fn render_frame(&self, frame: &mut Frame) {
         frame.render_widget(self, frame.size());
     }
 
-    fn handle_events(&mut self) -> io::Result<()> {
+    fn handle_events(&mut self) -> std::io::Result<()> {
         match event::read()? {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
                 self.handle_key_event(key_event)
@@ -205,19 +162,7 @@ impl App {
             return;
         }
         let r = self.tasks[self.cursor_pos.0].remove(self.cursor_pos.1);
-        //match self.tasks[self.cursor_pos.0].len() {
-        //    0 => {
-        //        return;
-        //    }
-        //    1 => {
-        //        self.cursor_pos.1 = 0;
-        //    }
-        //    _ => {
-        //        if self.cursor_pos.1 == self.tasks[self.cursor_pos.0].len() {
-        //            self.cursor_pos.1 -= 1;
-        //        }
-        //    }
-        //}
+
         if self.cursor_pos.1 > 0 {
             self.cursor_pos.1 -= 1;
         }

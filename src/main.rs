@@ -2,6 +2,7 @@ mod app;
 mod styles;
 mod tui;
 mod state;
+mod file;
 
 use std::{env, fs};
 
@@ -14,7 +15,7 @@ fn main() -> std::io::Result<()> {
             match fs::read(env_path.join(".mintl")) {
                 Ok(content) => {
                     crate::app::App {
-                        tasks: state::content_to_task(content),
+                        tasks: state::content_to_task(&content),
                         ..Default::default()
                     }.run(&mut terminal)
                 }
